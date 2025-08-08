@@ -1,0 +1,1 @@
+ALTER TABLE users CHANGE COLUMN username display_name VARCHAR(100) NOT NULL;

@@ -1,0 +1,16 @@
+DROP TABLE IF EXISTS posts;
+
+CREATE TABLE posts (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    image_url VARCHAR(255), -- Optional blog image
+    like_count INT DEFAULT 0,
+
+    author_id BIGINT NOT NULL,
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
