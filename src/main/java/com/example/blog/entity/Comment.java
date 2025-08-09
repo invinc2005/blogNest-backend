@@ -36,6 +36,7 @@ public class Comment {
     private LocalDateTime updatedAt;
 
     @Column(name = "is_edited", nullable = false)
+    @Builder.Default
     private boolean isEdited = false;
 
     @PrePersist
