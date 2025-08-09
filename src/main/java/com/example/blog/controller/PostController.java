@@ -26,12 +26,6 @@ public class PostController {
     private final PostService postService; // Inject the service via the constructor
     private final UserService userService;
 
-    @GetMapping("/me/post-stats")
-    public ResponseEntity<List<MonthlyPostCountDto>> getMyPostStats(Authentication authentication) {
-        User currentUser = (User) authentication.getPrincipal();
-        return ResponseEntity.ok(userService.getMonthlyPostCounts(currentUser.getId()));
-    }
-
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> createPost(

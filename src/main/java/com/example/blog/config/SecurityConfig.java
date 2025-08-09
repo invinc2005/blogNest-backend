@@ -26,26 +26,18 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
+
     @Value("${CLIENT_URL}")
     private String clientUrl;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
-
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/uploads/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/posts", "/api/posts/{id}", "/api/posts/{id}/comments", "/api/posts/trending").permitAll()
-
-                        .requestMatchers(HttpMethod.PUT, "/api/users/me/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/users/me/**").authenticated() // Also for profile pic
-                        .requestMatchers(HttpMethod.GET, "/api/posts/me/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/users/me/username").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/users/me/profile-picture").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated() // <-- Also needed for fetching user data
-
+                        .requestMatchers("/api/auth/**", "/uploads/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/comments/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -58,7 +50,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", clientUrl));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

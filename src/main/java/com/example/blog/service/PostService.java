@@ -16,10 +16,12 @@
     import org.springframework.stereotype.Service;
     import org.springframework.transaction.annotation.Transactional;
 
+    import java.io.IOException;
     import java.util.ArrayList; // <-- Import ArrayList
     import java.time.LocalDateTime;
     import java.time.format.DateTimeFormatter;
     import java.util.ArrayList;
+    import java.util.HashSet;
     import java.util.List;
     import java.util.stream.Collectors;
 
@@ -30,7 +32,7 @@
         private final PostRepository postRepository;
         private final UserRepository userRepository;
         private final PostLikeRepository postLikeRepository;
-        private final FileStorageService fileStorageService; // <-- ADD THIS LINE
+        private final StorageService storageService;
 
         @Transactional
         public PostResponse createPost(PostRequest request, String userEmail) {
@@ -39,8 +41,12 @@
 
             String finalImageUrl = request.getImageUrl();
             if (request.getImageFile() != null && !request.getImageFile().isEmpty()) {
-                String filename = fileStorageService.store(request.getImageFile());
-                finalImageUrl = "/uploads/" + filename;
+                try {
+                    // Upload to Supabase
+                    finalImageUrl = storageService.uploadFile(request.getImageFile());
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to upload post image", e);
+                }
             }
 
             Post post = Post.builder()
@@ -49,7 +55,12 @@
                     .imageUrl(finalImageUrl)
                     .author(author)
                     .build();
-
+            if (post.getComments() == null) {
+                post.setComments(new HashSet<>());
+            }
+            if (post.getLikes() == null) {
+                post.setLikes(new HashSet<>());
+            }
             Post savedPost = postRepository.save(post);
             return convertToDto(savedPost);
         }
@@ -94,10 +105,12 @@
 
             String finalImageUrl = request.getImageUrl();
             if (request.getImageFile() != null && !request.getImageFile().isEmpty()) {
-                String filename = fileStorageService.store(request.getImageFile());
-                finalImageUrl = "/uploads/" + filename;
-            } else if (finalImageUrl != null && finalImageUrl.isEmpty()) {
-                finalImageUrl = null;
+                try {
+                    // Upload to Supabase
+                    finalImageUrl = storageService.uploadFile(request.getImageFile());
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to upload post image", e);
+                }
             }
 
             post.setTitle(request.getTitle());
@@ -105,6 +118,12 @@
             post.setImageUrl(finalImageUrl);
             post.setUpdatedAt(LocalDateTime.now());
 
+            if (post.getComments() == null) {
+                post.setComments(new HashSet<>());
+            }
+            if (post.getLikes() == null) {
+                post.setLikes(new HashSet<>());
+            }
             Post updatedPost = postRepository.save(post);
             return convertToDto(updatedPost);
         }

@@ -27,4 +27,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "FROM Post p WHERE p.author.id = :authorId AND p.createdAt >= :startDate " +
             "GROUP BY FUNCTION('DATE_FORMAT', p.createdAt, '%Y-%m')")
     List<Object[]> countByAuthorAndMonth(@Param("authorId") Long authorId, @Param("startDate") LocalDateTime startDate);
+    @Query("SELECT p.createdAt FROM Post p WHERE p.author.id = :authorId AND p.createdAt >= :startDate")
+    List<LocalDateTime> findCreatedAtByAuthorSince(@Param("authorId") Long authorId, @Param("startDate") LocalDateTime startDate);
 }

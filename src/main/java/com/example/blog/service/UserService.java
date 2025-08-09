@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -25,35 +26,27 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final FileStorageService fileStorageService;
     private final PostRepository postRepository;
+    private final StorageService storageService;
 
     public List<MonthlyPostCountDto> getMonthlyPostCounts(Long authorId) {
-        List<MonthlyPostCountDto> monthlyStats = new ArrayList<>();
-        YearMonth currentMonth = YearMonth.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+        LocalDateTime startDate = LocalDateTime.now().minusMonths(6);
 
-        for (int i = 5; i >= 0; i--) {
-            YearMonth targetMonth = currentMonth.minusMonths(i);
-            monthlyStats.add(new MonthlyPostCountDto(targetMonth.format(formatter), 0L));
-        }
+        // 1. Fetch the raw list of timestamps from the simple query
+        List<LocalDateTime> timestamps = postRepository.findCreatedAtByAuthorSince(authorId, startDate);
 
-        LocalDateTime startDate = currentMonth.minusMonths(5).atDay(1).atStartOfDay();
-        List<Object[]> postCounts = postRepository.countByAuthorAndMonth(authorId, startDate);
-
-        Map<String, Long> dbCounts = postCounts.stream()
-                .collect(Collectors.toMap(
-                        obj -> (String) obj[0],
-                        obj -> (Long) obj[1]
+        // 2. Process the data in Java using Streams
+        Map<String, Long> monthlyCounts = timestamps.stream()
+                .collect(Collectors.groupingBy(
+                        dt -> dt.format(DateTimeFormatter.ofPattern("yyyy-MM")),
+                        Collectors.counting()
                 ));
 
-        monthlyStats.forEach(dto -> {
-            if (dbCounts.containsKey(dto.getMonth())) {
-                dto.setPostCount(dbCounts.get(dto.getMonth()));
-            }
-        });
-
-        return monthlyStats;
+        // 3. Convert the map to the DTO list
+        return monthlyCounts.entrySet().stream()
+                .map(entry -> new MonthlyPostCountDto(entry.getKey(), entry.getValue()))
+                .sorted((a, b) -> b.getMonth().compareTo(a.getMonth())) // Sort newest first
+                .collect(Collectors.toList());
     }
 
     public User getByEmail(String email) {
@@ -89,17 +82,21 @@ public class UserService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String filename = fileStorageService.store(file);
-        String fileUrl = "/uploads/" + filename;
+        try {
+            // Upload the file to Supabase and get the full public URL
+            String fileUrl = storageService.uploadFile(file);
+            user.setProfilePictureUrl(fileUrl);
+            userRepository.save(user);
 
-        user.setProfilePictureUrl(fileUrl);
-        userRepository.save(user);
-
-        return UserDto.builder()
-                .id(user.getId())
-                .displayName(user.getDisplayName()) // <-- Use the new getter
-                .email(user.getEmail())
-                .profilePictureUrl(user.getProfilePictureUrl())
-                .build();
+            return UserDto.builder()
+                    .id(user.getId())
+                    .displayName(user.getDisplayName())
+                    .email(user.getEmail())
+                    .profilePictureUrl(user.getProfilePictureUrl())
+                    .build();
+        } catch (IOException e) {
+            // In a real app, handle this more gracefully
+            throw new RuntimeException("Failed to upload profile picture", e);
+        }
     }
 }
