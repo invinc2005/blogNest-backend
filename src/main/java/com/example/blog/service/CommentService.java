@@ -87,7 +87,7 @@ public class CommentService {
         return CommentDto.builder()
                 .id(comment.getId())
                 .content(comment.getContent())
-                .authorUsername(comment.getAuthor().getUsername())
+                .authorUsername(comment.getAuthor().getDisplayName())
                 .authorEmail(comment.getAuthor().getEmail())
                 .authorProfilePicture(comment.getAuthor().getProfilePictureUrl())
                 .createdAt(comment.getCreatedAt().format(formatter))
