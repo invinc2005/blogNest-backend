@@ -28,8 +28,8 @@ This is the Spring Boot backend for BlogNest, a full-stack blogging application.
 
 1.  **Clone the repository:**
     ```bash
-    git clone <your-repo-url>
-    cd blog-backend
+    git clone https://github.com/invinc2005/blogNest-backend.git
+    cd blogNest-backend
     ```
 
 2.  **Configure `application.properties`:**
