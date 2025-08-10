@@ -1,7 +1,8 @@
 # BlogNest - Backend 
 > **Frontend Repository:** [FrontEnd](https://github.com/invinc2005/blogNest-frontend)
 >
-> **Live Frontend URL:** [BlogNest](https://blog-nesttest.vercel.app/)
+> **Live Frontend URL:** [BlogNest](https://blog-nesttest.vercel.app/).
+> 
 This is the Spring Boot backend for BlogNest, a full-stack blogging application. It provides a complete RESTful API for user authentication, post management, comments, likes, and more.
 
 ## Features
